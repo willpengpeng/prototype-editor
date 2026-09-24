@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>测试项目首页</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <nav><button id="action">提交申请</button></nav>
+  <iframe src="child.html" title="子页面"></iframe>
+  <script>document.querySelector('#action').addEventListener('click',()=>document.body.dataset.clicked='yes')</script>
+</body>
+</html>

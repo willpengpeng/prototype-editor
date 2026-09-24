@@ -1,0 +1,8 @@
+# 依赖
+node_modules/
+
+# macOS
+.DS_Store
+
+# 日志
+*.log

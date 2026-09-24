@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>HTML 原型审阅编辑器</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">H</div>
+        <div><strong>HTML 原型审阅编辑器</strong><span>本地试用版</span></div>
+      </div>
+      <div class="project-chip" id="project-chip">尚未打开项目</div>
+      <nav class="mode-switch" aria-label="工作模式">
+        <button class="mode-btn active" data-mode="preview">预览</button>
+        <button class="mode-btn" data-mode="edit">编辑文字</button>
+        <button class="mode-btn" data-mode="annotate">添加批注</button>
+      </nav>
+      <div class="toolbar-actions">
+        <button class="icon-btn" id="undo-btn" title="撤销" disabled>↶</button>
+        <button class="icon-btn" id="redo-btn" title="重做" disabled>↷</button>
+        <button class="secondary-btn" id="open-project-btn">打开项目</button>
+        <button class="primary-btn" id="save-btn" disabled>保存</button>
+        <button class="secondary-btn" id="export-btn" disabled>导出</button>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <aside class="sidebar page-sidebar">
+        <div class="panel-head"><span>项目页面</span><span class="panel-head-actions"><span class="count" id="file-count">0</span><button class="collapse-sidebar-btn" id="hide-page-sidebar" title="隐藏项目页面" aria-label="隐藏项目页面">‹</button></span></div>
+        <div class="project-path" id="project-path">打开包含 HTML、CSS、JS 和图片的项目文件夹</div>
+        <div class="file-list" id="file-list"></div>
+      </aside>
+
+      <section class="stage">
+        <div class="stage-toolbar">
+          <div class="source-indicator"><span class="dot"></span><span id="source-file">未选择页面</span></div>
+          <div class="stage-help" id="mode-help">预览模式：页面交互保持原样</div>
+          <div class="stage-toolbar-actions">
+            <button class="text-btn page-panel-toggle hidden" id="show-page-sidebar">显示页面</button>
+            <button class="text-btn annotation-panel-toggle hidden" id="show-annotation-sidebar">显示批注栏 <span id="collapsed-annotation-count">0</span></button>
+            <button class="text-btn" id="reload-btn" disabled>刷新页面</button>
+          </div>
+        </div>
+        <div class="canvas" id="canvas">
+          <div class="empty-state" id="empty-state">
+            <div class="empty-icon">⌘</div>
+            <h1>打开一个本地 HTML 项目</h1>
+            <p>页面只在你的 Mac 本机读取和处理，不上传、不登录。</p>
+            <button class="primary-btn large" id="empty-open-btn">选择项目文件夹</button>
+          </div>
+          <iframe id="preview-frame" title="HTML 原型预览" hidden></iframe>
+        </div>
+      </section>
+
+      <aside class="sidebar annotation-sidebar">
+        <div class="panel-head"><span>批注</span><span class="panel-head-actions"><span class="count" id="annotation-count">0</span><button class="collapse-sidebar-btn" id="hide-annotation-sidebar" title="隐藏批注栏" aria-label="隐藏批注栏">›</button></span></div>
+        <div class="annotation-tools">
+          <input id="annotation-search" type="search" placeholder="搜索批注" aria-label="搜索批注">
+          <button class="text-btn" id="toggle-pins-btn">隐藏编号</button>
+        </div>
+        <div class="annotation-list" id="annotation-list">
+          <div class="panel-empty">切换到“添加批注”，单击页面组件即可记录说明。</div>
+        </div>
+      </aside>
+    </main>
+
+    <footer class="statusbar">
+      <span id="save-state">未打开项目</span>
+      <span class="status-spacer"></span>
+      <span id="draft-state">草稿仅保存在本机</span>
+    </footer>
+  </div>
+
+  <div class="modal-backdrop hidden" id="editor-modal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="editor-modal-title">
+      <div class="modal-head"><div><span class="modal-kicker">编辑静态文字</span><h2 id="editor-modal-title">修改页面文字</h2></div><button class="close-btn" data-close="editor-modal">×</button></div>
+      <div class="modal-body">
+        <div class="source-card">实际来源文件：<strong id="edit-source"></strong></div>
+        <label class="field-label" for="edit-value">文字内容</label>
+        <textarea id="edit-value" rows="6"></textarea>
+        <div class="hint">首版仅修改 HTML 中已有的静态文字，不修改动态脚本内容。</div>
+      </div>
+      <div class="modal-foot"><button class="secondary-btn" data-close="editor-modal">取消</button><button class="primary-btn" id="confirm-edit-btn">应用修改</button></div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop hidden" id="annotation-modal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="annotation-modal-title">
+      <div class="modal-head"><div><span class="modal-kicker">组件批注</span><h2 id="annotation-modal-title">添加说明</h2></div><button class="close-btn" data-close="annotation-modal">×</button></div>
+      <div class="modal-body">
+        <div class="source-card"><strong id="annotation-target"></strong><span id="annotation-source"></span></div>
+        <label class="field-label" for="annotation-value">批注内容</label>
+        <textarea id="annotation-value" rows="5" placeholder="输入需要他人查看的说明"></textarea>
+      </div>
+      <div class="modal-foot"><button class="secondary-btn" data-close="annotation-modal">取消</button><button class="primary-btn" id="confirm-annotation-btn">保存批注</button></div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop hidden" id="save-modal">
+    <div class="modal compact" role="dialog" aria-modal="true" aria-labelledby="save-modal-title">
+      <div class="modal-head"><div><span class="modal-kicker">保存</span><h2 id="save-modal-title">选择保存方式</h2></div><button class="close-btn" data-close="save-modal">×</button></div>
+      <div class="modal-body choice-grid">
+        <button class="choice-card recommended" id="save-copy-btn"><span class="choice-badge">推荐</span><strong>另存项目副本</strong><span>复制整个项目，在副本中写入修改，原文件保持不变。</span></button>
+        <button class="choice-card danger-choice" id="save-overwrite-btn"><strong>覆盖源文件</strong><span>修改实际来源 HTML，执行前自动备份。</span></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop hidden" id="export-modal">
+    <div class="modal compact" role="dialog" aria-modal="true" aria-labelledby="export-modal-title">
+      <div class="modal-head"><div><span class="modal-kicker">导出</span><h2 id="export-modal-title">选择交付版本</h2></div><button class="close-btn" data-close="export-modal">×</button></div>
+      <div class="modal-body">
+        <div class="export-section-label">导出范围</div>
+        <div class="export-scope-switch">
+          <button class="active" data-export-scope="page"><strong>当前页面</strong><span>页面及检测到的依赖文件</span></button>
+          <button data-export-scope="folder"><strong>页面所在文件夹</strong><span>复制整个项目，最稳妥</span></button>
+        </div>
+        <div class="export-section-label">交付版本</div>
+        <div class="choice-grid">
+          <button class="choice-card" data-export-kind="runnable"><strong>标准版</strong><span>当前页面直接导出单个 HTML；不包含批注和编辑器数据。</span></button>
+          <button class="choice-card recommended" data-export-kind="annotated"><span class="choice-badge">评审</span><strong>单文件批注版</strong><span>批注和页面依赖嵌入 HTML，可显示或隐藏编号与右侧批注栏。</span></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-region" id="toast-region" aria-live="polite"></div>
+  <div class="annotation-hover-popover hidden" id="annotation-hover-popover" role="tooltip"></div>
+  <script type="module" src="/app.js"></script>
+</body>
+</html>
